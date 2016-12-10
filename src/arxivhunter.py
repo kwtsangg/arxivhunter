@@ -108,7 +108,7 @@ def update_maintex():
       itertex = open(ArxivDirPath+"/data/"+file+"/"+file+".txt",'r')
       for line in itertex:
         maintex.write('%s\n' % (r"\hline"))
-        maintex.write("%s\n" % line)
+        maintex.write("%s\n" % line.replace('\n',''))
       itertex.close()
       print_table_footer(maintex)
   
@@ -135,7 +135,7 @@ def add_content(ArgsAdd, Comment):
   subprocess.check_call("mkdir -p %s/data/%s" % (ArxivDirPath,RelDataPath), stdout=subprocess.PIPE, shell=True)
   DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'a+')
   # index, title, author, comment. link, pdflink
-  DataTxtObject.write(r"%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\" % (item.index,item.title,item.authorlist,Comment,item.link,item.pdflink))
+  DataTxtObject.write("%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (item.index,item.title,item.authorlist,Comment,item.link,item.pdflink))
   DataTxtObject.close()
 
 def remove_content(ArgsRemove):
@@ -200,6 +200,8 @@ def main():
     edit_comment(args.edit, args.comment)
     update_maintex()
     compile_maintex()
+  elif args.update:
+    update_maintex()
   elif args.compile:
     compile_maintex()
   else:
@@ -216,6 +218,7 @@ if __name__ == "__main__":
   parser.add_argument("-ed", "--edit",                   action="store"     , help="Remove arxiv index and add it back to database. Caution: The old comment will be replaced by new comment!")
   parser.add_argument("-cm", "--comment", default="-"  , action="store"     , help="Add comment.")
   parser.add_argument(       "--compile",                action="store_true", help="Compile the tex in case you need.")
+  parser.add_argument(       "--update",                 action="store_true", help="Update the tex in case you need.")
 #  parser.add_argument(       "--verbose", default=False, action="store_true", help="Print more messages.")
   parser.add_argument(       "--version",                action="version", version='%(prog)s ' + __version__)
   args = parser.parse_args() 
