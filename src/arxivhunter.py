@@ -11,6 +11,8 @@ __email__      = "kwtsang@nikhef.nl"
        arxivhunter
   Author:
        Ka Wa TSANG
+  Date:
+       2016-Dec-10 Birthday
 """
 Description="""
        A program to create an arxiv table to easy access.
@@ -21,10 +23,6 @@ Description="""
          3) arxivhunter -ed <index> -c <NewComment> Remove content and add it back with new comment
          3) arxivhunter                              View the table by opening firefox
        """
-"""
-  History:
-       2016-Dec-10 First version.
-"""
 #=======================================================================================
 # Module/package import
 #=======================================================================================
@@ -62,7 +60,14 @@ class Arxiv:
       if name == "citation_title":
         self.title  = self.getcontent("//meta/@content")[i]
       if name == "citation_author":
-        self.author.append(self.getcontent("//meta/@content")[i])
+        tmp_name = re.split(', ',self.getcontent("//meta/@content")[i])
+        if len(tmp_name) == 1: 
+          self.author.append(tmp_name[0])
+        elif len(tmp_name) == 2:
+          self.author.append(tmp_name[1]+" "+tmp_name[0])
+        else:
+          print "The author name has two commas. Strange ! Exiting ..."
+          sys.exit()
       if name == "citation_date":
         self.date   = self.getcontent("//meta/@content")[i]
 
@@ -166,19 +171,22 @@ def print_header(file):
   file.write('%s\n' % (r"\usepackage{amsmath}"))
   file.write('%s\n' % (r"\usepackage{physics}"))
   file.write('%s\n' % (r"\usepackage{array}"))
+  file.write('%s\n' % (r"\usepackage{longtable}"))
+  file.write('%s\n' % (r"\title{Arxiv table}"))
+  file.write('%s\n' % (r"\author{" + __author__ +  "}"))
+  file.write('%s\n' % (r"\date{\today}"))  
   file.write('%s\n' % (r"\begin{document}"))
+  file.write('%s\n' % (r"\maketitle"))
 
 def print_table_header(file, caption):
-  file.write('%s\n' % (r"\begin{table}"))
-  file.write('%s\n' % (r"\caption{"+caption+"}"))
-  file.write('%s\n' % (r"\begin{tabular}{|m{2cm}|m{9cm}|m{7cm}|m{10cm}|m{1cm}|m{1cm}|}"))
+  file.write('%s\n' % (r"\section{"+caption+"}"))
+  file.write('%s\n' % (r"\begin{longtable}{|m{2cm}|m{9cm}|m{7cm}|m{10cm}|m{1cm}|m{1cm}|}"))
   file.write('%s\n' % (r"\hline \hline"))
   file.write('%s\n' % (r"Index & Title & Authors & Comment & Arxiv & PDF \\"))
 
 def print_table_footer(file):
   file.write('%s\n' % (r"\hline \hline"))
-  file.write('%s\n' % (r"\end{tabular}"))
-  file.write('%s\n' % (r"\end{table}"))
+  file.write('%s\n' % (r"\end{longtable}"))
 
 def print_footer(file):
   file.write('%s\n' % (r"\end{document}"))
