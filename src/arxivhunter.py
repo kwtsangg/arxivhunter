@@ -16,9 +16,9 @@ Description="""
        A program to create an arxiv table to easy access.
 
        Example Usage
-         1) arxivhunter -a <index> -cm <comment>     Add content based on the arxiv index
+         1) arxivhunter -a <index> -c <comment>     Add content based on the arxiv index
          2) arxivhunter -rm <index1> <index2>        Remove content based on the arxiv index
-         3) arxivhunter -ed <index> -cm <NewComment> Remove content and add it back with new comment
+         3) arxivhunter -ed <index> -c <NewComment> Remove content and add it back with new comment
          3) arxivhunter                              View the table by opening firefox
        """
 """
@@ -216,7 +216,7 @@ if __name__ == "__main__":
   parser.add_argument("-a ", "--add",                    action="store"     , help="Add arxiv index to database")
   parser.add_argument("-rm", "--remove", nargs="+",      action="store"     , help="Remove arxiv index to database")
   parser.add_argument("-ed", "--edit",                   action="store"     , help="Remove arxiv index and add it back to database. Caution: The old comment will be replaced by new comment!")
-  parser.add_argument("-cm", "--comment", default="-"  , action="store"     , help="Add comment.")
+  parser.add_argument("-c ", "--comment", default="-"  , action="store"     , help="Add comment.")
   parser.add_argument(       "--compile",                action="store_true", help="Compile the tex in case you need.")
   parser.add_argument(       "--update",                 action="store_true", help="Update the tex in case you need.")
 #  parser.add_argument(       "--verbose", default=False, action="store_true", help="Print more messages.")
