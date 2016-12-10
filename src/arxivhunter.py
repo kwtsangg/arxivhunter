@@ -103,25 +103,27 @@ def update_maintex():
   print_header(maintex)
   
   for file in os.listdir(ArxivDirPath+"/data"):
-    print_table_header(maintex, file.replace('_',' '))
-    itertex = open(ArxivDirPath+"/data/"+file+"/"+file+".txt",'r')
-    for line in itertex:
-      maintex.write('%s\n' % (r"\hline"))
-      maintex.write("%s\n" % line)
-    itertex.close()
-    print_table_footer(maintex)
+    if os.path.getsize(ArxivDirPath+"/data/"+file+"/"+file+".txt") > 0:
+      print_table_header(maintex, file.replace('_',' '))
+      itertex = open(ArxivDirPath+"/data/"+file+"/"+file+".txt",'r')
+      for line in itertex:
+        maintex.write('%s\n' % (r"\hline"))
+        maintex.write("%s\n" % line)
+      itertex.close()
+      print_table_footer(maintex)
   
   print_footer(maintex)
   maintex.close()
 
 def compile_maintex():
+  os.chdir(ArxivDirPath)
   # Compile
   subprocess.check_call("pdflatex -halt-on-error %s/arxivhunter.tex" % (ArxivDirPath), stdout=subprocess.PIPE, shell=True)
   subprocess.check_call("pdflatex -halt-on-error %s/arxivhunter.tex" % (ArxivDirPath), stdout=subprocess.PIPE, shell=True)
   # Clean
-  TexCleanFileFormat=[ "log", "aux", "out", "nav", "snm", "toc", "dvi", "tex" ]
+  TexCleanFileFormat=[ "log", "aux", "out", "nav", "snm", "toc", "dvi" ]
   for fileformat in TexCleanFileFormat:
-    item = ArxivDirPath + "/" + arxivhunter + "." + fileformat
+    item = ArxivDirPath + "/arxivhunter." + fileformat
     if os.path.isfile(item):
 #      printf("Deleting %s ..." % item, "verbose") if args.verbose else None
       subprocess.check_call("rm " + item, stdout=subprocess.PIPE, shell=True)    
@@ -163,14 +165,15 @@ def print_header(file):
   file.write('%s\n' % (r"\usepackage{hyperref}"))
   file.write('%s\n' % (r"\usepackage{amsmath}"))
   file.write('%s\n' % (r"\usepackage{physics}"))
+  file.write('%s\n' % (r"\usepackage{array}"))
   file.write('%s\n' % (r"\begin{document}"))
 
 def print_table_header(file, caption):
   file.write('%s\n' % (r"\begin{table}"))
   file.write('%s\n' % (r"\caption{"+caption+"}"))
-  file.write('%s\n' % (r"\begin{tabular}{|p{2cm}|p{10cm}|p{7cm}|p{7cm}|p{2cm}|p{2cm}|}"))
+  file.write('%s\n' % (r"\begin{tabular}{|m{2cm}|m{9cm}|m{7cm}|m{10cm}|m{1cm}|m{1cm}|}"))
   file.write('%s\n' % (r"\hline \hline"))
-  file.write('%s\n' % (r"Index & Title & Authors & Comment & Arxiv link & PDF link \\"))
+  file.write('%s\n' % (r"Index & Title & Authors & Comment & Arxiv & PDF \\"))
 
 def print_table_footer(file):
   file.write('%s\n' % (r"\hline \hline"))
@@ -195,6 +198,10 @@ def main():
     compile_maintex()
   elif args.edit:
     edit_comment(args.edit, args.comment)
+    update_maintex()
+    compile_maintex()
+  elif args.compile:
+    compile_maintex()
   else:
     subprocess.check_call("firefox %s/arxivhunter.pdf" % ArxivDirPath, stdout=subprocess.PIPE, shell=True)
 
@@ -204,10 +211,11 @@ if __name__ == "__main__":
   sys.setdefaultencoding('utf-8')
   
   parser = argparse.ArgumentParser(description=textwrap.dedent(Description), prog=__file__, formatter_class=argparse.RawTextHelpFormatter)
-  parser.add_argument("-a ", "--add"                   , action="store"     , help="Add arxiv index to database")
-  parser.add_argument("-rm", "--remove", nargs="+"     , action="store"     , help="Remove arxiv index to database")
-  parser.add_argument("-ed", "--edit",                 , action="store"     , help="Remove arxiv index and add it back to database. Caution: The old comment will be replaced by new comment!")
+  parser.add_argument("-a ", "--add",                    action="store"     , help="Add arxiv index to database")
+  parser.add_argument("-rm", "--remove", nargs="+",      action="store"     , help="Remove arxiv index to database")
+  parser.add_argument("-ed", "--edit",                   action="store"     , help="Remove arxiv index and add it back to database. Caution: The old comment will be replaced by new comment!")
   parser.add_argument("-cm", "--comment", default="-"  , action="store"     , help="Add comment.")
+  parser.add_argument(       "--compile",                action="store_true", help="Compile the tex in case you need.")
 #  parser.add_argument(       "--verbose", default=False, action="store_true", help="Print more messages.")
   parser.add_argument(       "--version",                action="version", version='%(prog)s ' + __version__)
   args = parser.parse_args() 
