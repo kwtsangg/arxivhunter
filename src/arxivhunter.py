@@ -18,9 +18,8 @@ Description="""
        A program to create an arxiv table to easy access.
 
        Example Usage
-         1) arxivhunter -a <index> -c <comment>     Add content based on the arxiv index
+         1) arxivhunter -a <index> -c <comment>      Add/Edit content based on the arxiv index
          2) arxivhunter -rm <index1> <index2>        Remove content based on the arxiv index
-         3) arxivhunter -ed <index> -c <NewComment> Remove content and add it back with new comment
          3) arxivhunter                              View the table by opening firefox
        """
 #=======================================================================================
@@ -90,19 +89,52 @@ class Arxiv:
 #=======================================================================================
 # General Function
 #=======================================================================================
-#def printf(string, printtype="message", askforinput=False):
-#  """
-#    To print out the message of different types.
-#    Optional: "askforinput", if true, the function will return the input by user.
-#  """
-#  if askforinput == False:
-#    print "log %7s :: %s" % ( printtype, string )
-#  elif askforinput == True:
-#    return raw_input( "log %7s :: %s" % ( printtype, string ) )
-#  else:
-#    printf("Unknown option for askforinput in the printf function ! Exiting ...", "error")
-#    sys.exit()
+def printf(string, printtype="message", askforinput=False):
+  """
+    To print out the message of different types.
+    Optional: "askforinput", if true, the function will return the input by user.
+  """
+  if askforinput == False:
+    print "Arxiv %7s :: %s" % ( printtype, string )
+  elif askforinput == True:
+    return raw_input( "Arxiv %7s :: %s" % ( printtype, string ) )
+  else:
+    printf("Unknown option for askforinput in the printf function ! Exiting ...", "error")
+    sys.exit()
 
+def query_yes_no(question, default="yes"):                                                                                                                                                                   
+    """Ask a yes/no question via raw_input() and return their answer.
+
+    "question" is a string that is presented to the user.
+    "default" is the presumed answer if the user just hits <Enter>.
+        It must be "yes" (the default), "no" or None (meaning
+        an answer is required of the user).
+
+    The "answer" return value is one of "yes" or "no".
+    """
+    valid = {"yes":"yes",   "y":"yes",  "ye":"yes",
+             "no":"no",     "n":"no"}
+    if default == None:
+        prompt = " [y/n] "
+    elif default == "yes":
+        prompt = " [Y/n] "
+    elif default == "no":
+        prompt = " [y/N] "
+    else:
+        raise ValueError("invalid default answer: '%s'" % default)
+
+    while 1:
+        choice = printf(question + prompt, askforinput=True).lower()
+        if default is not None and choice == '': 
+            return default
+        elif choice in valid.keys():
+            return valid[choice]
+        else:
+            printf("Please respond with 'yes' or 'no' (or 'y' or 'n').", "warning")
+
+#=======================================================================================
+# Arxivhunter Function
+#=======================================================================================
 def update_maintex():
   maintex = open(ArxivDirPath+"/arxivhunter.tex","w+")
   print_header(maintex)
@@ -130,37 +162,61 @@ def compile_maintex():
   for fileformat in TexCleanFileFormat:
     item = ArxivDirPath + "/arxivhunter." + fileformat
     if os.path.isfile(item):
-#      printf("Deleting %s ..." % item, "verbose") if args.verbose else None
+      printf("Deleting %s ..." % item, "verbose") if args.verbose else None
       subprocess.check_call("rm " + item, stdout=subprocess.PIPE, shell=True)    
 
 def add_content(ArgsAdd, Comment):
-# TODO: Check the index doesnt exist before adding to the list
-  item = Arxiv(ArgsAdd)
-  RelDataPath   = item.category.replace(' ','_').replace('(','').replace(')','')
+  arxiv_item = Arxiv(ArgsAdd)
+  RelDataPath   = arxiv_item.category.replace(' ','_').replace('(','').replace(')','')
   subprocess.check_call("mkdir -p %s/data/%s" % (ArxivDirPath,RelDataPath), stdout=subprocess.PIPE, shell=True)
   DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'a+')
   # index, title, author, comment. link, pdflink
-  DataTxtObject.write("%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (item.index,item.title,item.authorlist,Comment,item.link,item.pdflink))
+  DataTxtObject.write("%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (arxiv_item.index,arxiv_item.title,arxiv_item.authorlist,Comment,arxiv_item.link,arxiv_item.pdflink))
   DataTxtObject.close()
 
 def remove_content(ArgsRemove):
-  for item in ArgsRemove:
-    arxiv_item = Arxiv(item)
-    RelDataPath   = arxiv_item.category.replace(' ','_').replace('(','').replace(')','')
-    DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'r+')
-    Output = []
-    for line in DataTxtObject:
-      if not re.split(' & ',line)[0] in item:
-        Output.append(line)
-    DataTxtObject.close()
-    DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'w+')
-    DataTxtObject.writelines(Output)
-    DataTxtObject.close()
+  arxiv_item = Arxiv(ArgsRemove)
+  RelDataPath   = arxiv_item.category.replace(' ','_').replace('(','').replace(')','')
+  DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'r+')
+  Output = []
+  for line in DataTxtObject:
+    if not re.split(' & ',line)[0] in arxiv_item.index:
+      Output.append(line)
+  DataTxtObject.close()
+  DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'w+')
+  DataTxtObject.writelines(Output)
+  DataTxtObject.close()
   
 def edit_comment(ArgsEdit, Comment):
-  remove_content([ArgsEdit])
-  add_content(ArgsEdit, Comment)
+  arxiv_item = Arxiv(ArgsEdit)
+  RelDataPath   = arxiv_item.category.replace(' ','_').replace('(','').replace(')','')
+  DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'r+')
+  Output = []
+  for line in DataTxtObject:
+    if not re.split(' & ',line)[0] == arxiv_item.index:
+      Output.append(line)
+    else:
+      Output.append("%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (arxiv.index,arxiv.title,arxiv.authorlist,Comment,arxiv.link,arxiv.pdflink))
+  DataTxtObject.close()
+  DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'w+')
+  DataTxtObject.writelines(Output)
+  DataTxtObject.close()
   
+def get_comment(index):
+  """ It can be used to check the existence of index. If the index doesnt exist, return empty string.
+  """
+  comment = ""
+  arxiv_item    = Arxiv(index)
+  RelDataPath   = arxiv_item.category.replace(' ','_').replace('(','').replace(')','')
+  DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'r+')
+  for line in DataTxtObject:
+    if re.split(' & ',line)[0] == arxiv_item.index:
+      comment = re.split(' & ',line)[3]
+      break
+  DataTxtObject.close()
+  return comment
+  
+
 #=======================================================================================
 # Template Function
 #=======================================================================================
@@ -197,15 +253,24 @@ def print_footer(file):
 
 def main():
   if args.add:
-    add_content(args.add, args.comment)
+    if get_comment(args.add) == "":
+      printf("The index %s doesnt exist. Adding ..." % args.add)
+      add_content(args.add, args.comment)
+    else:
+      printf("The index %s exists already." % args.add)
+      printf("The current comment is : %s" % get_comment(args.add))
+      printf("The   input comment is : %s" % args.comment)
+      if query_yes_no("Do you want to replace the current comment by the input comment?", default="no") == "yes":
+        edit_comment(args.add, args.comment)
+      else:
+        printf("Exiting ...")
+        sys.exit()
     update_maintex()
     compile_maintex()
   elif args.remove:
-    remove_content(args.remove)
-    update_maintex()
-    compile_maintex()
-  elif args.edit:
-    edit_comment(args.edit, args.comment)
+    for item in args.remove:
+      printf("Removing index %s ..." % item)
+      remove_content(item)
     update_maintex()
     compile_maintex()
   elif args.update:
@@ -223,11 +288,10 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description=textwrap.dedent(Description), prog=__file__, formatter_class=argparse.RawTextHelpFormatter)
   parser.add_argument("-a ", "--add",                    action="store"     , help="Add arxiv index to database")
   parser.add_argument("-rm", "--remove", nargs="+",      action="store"     , help="Remove arxiv index to database")
-  parser.add_argument("-ed", "--edit",                   action="store"     , help="Remove arxiv index and add it back to database. Caution: The old comment will be replaced by new comment!")
   parser.add_argument("-c ", "--comment", default="-"  , action="store"     , help="Add comment.")
   parser.add_argument(       "--compile",                action="store_true", help="Compile the tex in case you need.")
   parser.add_argument(       "--update",                 action="store_true", help="Update the tex in case you need.")
-#  parser.add_argument(       "--verbose", default=False, action="store_true", help="Print more messages.")
+  parser.add_argument(       "--verbose", default=False, action="store_true", help="Print more messages.")
   parser.add_argument(       "--version",                action="version", version='%(prog)s ' + __version__)
   args = parser.parse_args() 
 
