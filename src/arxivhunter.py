@@ -15,7 +15,7 @@ __email__      = "kwtsang@nikhef.nl"
        2016-Dec-10 Birthday
 """
 Description="""
-       A program to create an arxiv table to easy access.
+       A program to create an arxiv table for easy access.
 
        Example Usage
          1) arxivhunter -a <index> -c <comment>      Add/Edit content based on the arxiv index
