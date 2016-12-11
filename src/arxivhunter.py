@@ -196,7 +196,7 @@ def edit_comment(ArgsEdit, Comment):
     if not re.split(' & ',line)[0] == arxiv_item.index:
       Output.append(line)
     else:
-      Output.append("%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (arxiv.index,arxiv.title,arxiv.authorlist,Comment,arxiv.link,arxiv.pdflink))
+      Output.append("%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (arxiv_item.index,arxiv_item.title,arxiv_item.authorlist,Comment,arxiv_item.link,arxiv_item.pdflink))
   DataTxtObject.close()
   DataTxtObject = open(ArxivDirPath+"/data/"+RelDataPath+"/"+RelDataPath+".txt",'w+')
   DataTxtObject.writelines(Output)
