@@ -39,7 +39,7 @@ from lxml import etree
 # User Input before using this scirpt !!
 #=======================================================================================
 # Global Variable
-ArxivDirPath="/home/kwtsang/OneDrive_CUHK/mle/arxivhunter"
+ArxivDataPath="/home/kwtsang/Dropbox/arxivhunter_data"
 PDFBrowser="firefox"
 
 #=======================================================================================
@@ -86,7 +86,7 @@ class Arxiv:
 
   # Derived information
     self.authorlist = self.getauthorlist()
-    self.storedirpath = ArxivDirPath+"/data/"+self.category
+    self.storedirpath = ArxivDataPath+"/"+self.category
     self.storetxtpath = self.storedirpath+"/"+self.category+".txt"
 
   # output function
@@ -160,35 +160,39 @@ def query_yes_no(question, default="yes"):
 # Arxivhunter Function
 #=======================================================================================
 def update_maintex():
-  maintex = open(ArxivDirPath+"/arxivhunter.tex","w+")
+  maintex = open(ArxivDataPath+"/arxivhunter.tex","w+")
   print_header(maintex)
 
-  for file in os.listdir(ArxivDirPath+"/data"):
-    if os.path.getsize(ArxivDirPath+"/data/"+file+"/"+file+".txt") > 0:
-      print_table_header(maintex, file.replace('_',' '))
-      itertex = open(ArxivDirPath+"/data/"+file+"/"+file+".txt",'r')
-      for line in itertex:
-        maintex.write('%s\n' % (r"\hline"))
-        maintex.write("%s\n" % line.replace('\n',''))
-      itertex.close()
-      print_table_footer(maintex)
-    else:
-      printf("%s contains an empty data text. Deleting the whole directory ..." % (ArxivDirPath+"/data/"+file), "verbose") if args.verbose else None
-      subprocess.check_call("rm -rf "+ArxivDirPath+"/data/"+file, stdout=subprocess.PIPE, shell=True)
+  for file in os.listdir(ArxivDataPath):
+    try:
+      if os.path.getsize(ArxivDataPath+"/"+file+"/"+file+".txt") > 0:
+        print_table_header(maintex, file.replace('_',' '))
+        itertex = open(ArxivDataPath+"/"+file+"/"+file+".txt",'r')
+        for line in itertex:
+          maintex.write('%s\n' % (r"\hline"))
+          maintex.write("%s\n" % line.replace('\n',''))
+        itertex.close()
+        print_table_footer(maintex)
+      else:
+        printf("%s contains an empty data text. Deleting the whole directory ..." % (ArxivDataPath+"/"+file), "verbose") if args.verbose else None
+        subprocess.check_call("rm -rf "+ArxivDataPath+"/"+file, stdout=subprocess.PIPE, shell=True)
+    except:
+      None
   print_footer(maintex)
   maintex.close()
 
 def compile_maintex():
-  os.chdir(ArxivDirPath)
+  os.chdir(ArxivDataPath)
   # Compile
-  printf("Compiling the main tex ...", "verbose") if args.verbose else None
-  subprocess.check_call("pdflatex -halt-on-error %s/arxivhunter.tex" % (ArxivDirPath), stdout=subprocess.PIPE, shell=True)
-  subprocess.check_call("pdflatex -halt-on-error %s/arxivhunter.tex" % (ArxivDirPath), stdout=subprocess.PIPE, shell=True)
+  printf("Compiling the main tex (1st time)...", "verbose") if args.verbose else None
+  subprocess.check_call("pdflatex -halt-on-error %s/arxivhunter.tex" % (ArxivDataPath), stdout=subprocess.PIPE, shell=True)
+  printf("Compiling the main tex (2nd time)...", "verbose") if args.verbose else None
+  subprocess.check_call("pdflatex -halt-on-error %s/arxivhunter.tex" % (ArxivDataPath), stdout=subprocess.PIPE, shell=True)
   # Clean
   printf("Deleting the redundant files produced by compilation ...", "verbose") if args.verbose else None
   TexCleanFileFormat=[ "log", "aux", "out", "nav", "snm", "toc", "dvi" ]
   for fileformat in TexCleanFileFormat:
-    item = ArxivDirPath + "/arxivhunter." + fileformat
+    item = ArxivDataPath + "/arxivhunter." + fileformat
     if os.path.isfile(item):
       printf("Deleting %s ..." % item, "verbose") if args.verbose else None
       subprocess.check_call("rm " + item, stdout=subprocess.PIPE, shell=True)    
@@ -316,7 +320,7 @@ def main():
   elif args.updatedata == True:
     printf("This function is not yet ready. :)")
   else:
-    subprocess.check_call("%s %s/arxivhunter.pdf" % (PDFBrowser, ArxivDirPath), stdout=subprocess.PIPE, shell=True)
+    subprocess.check_call("%s %s/arxivhunter.pdf" % (PDFBrowser, ArxivDataPath), stdout=subprocess.PIPE, shell=True)
 
 if __name__ == "__main__":
   # Fix UnicodeEncodeError
