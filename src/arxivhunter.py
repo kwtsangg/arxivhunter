@@ -50,9 +50,21 @@ class Arxiv:
   # Raw information
     self.index    = index
     self.link     = "https://arxiv.org/abs/" + index
-    self.html     = self.gethtml()
-
     self.pdflink  = "https://arxiv.org/pdf/" + index + ".pdf"
+    self.html     = self.gethtml()
+    while (self.getcontent("//title/text()")[0].replace(' ','_')=="[%s]_Bad_paper_identifier" % self.index):
+      printf("The link (%s) is pointing to a bad paper identifier." % self.link, "warning")
+      try:
+        html_provided = printf("Can you provide the arxiv link of the pdf? ",askforinput=True)
+      except KeyboardInterrupt:
+        print ""
+        printf("User terminates the arxivhunter. Good Bye!")
+        sys.exit()
+      if html_provided:
+        self.link = html_provided
+        self.pdflink = html_provided.replace('abs','pdf')+".pdf"
+        self.html = self.gethtml()
+
     self.category = self.getcontent("//td//span/text()")[0].replace(' ','_').replace('(','').replace(')','')
     self.abstract = self.getcontent("//blockquote/text()[last()]")[0].replace('\n','')
 
@@ -253,7 +265,7 @@ def print_header(file):
   file.write('%s\n' % (r"\author{" + __author__ +  "}"))
   file.write('%s\n' % (r"\date{\today}"))  
   file.write('%s\n' % (r"\begin{document}"))
-  file.write('%s\n' % (r"\maketitle"))
+#  file.write('%s\n' % (r"\maketitle"))
 
 def print_table_header(file, caption):
   file.write('%s\n' % (r"\section{"+caption+"}"))
