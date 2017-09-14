@@ -34,13 +34,14 @@ from datetime import datetime
 import re
 import requests
 from lxml import etree
+import urllib2
 
 #=======================================================================================
 # User Input before using this scirpt !!
 #=======================================================================================
 # Global Variable
 ArxivDataPath="/home/kwtsang/Dropbox/arxivhunter_data"
-PDFBrowser="firefox"
+PDFBrowser="okular"
 
 #=======================================================================================
 # Arxiv class definition to hold all needed contents by providing index
@@ -88,12 +89,13 @@ class Arxiv:
     self.authorlist = self.getauthorlist()
     self.storedirpath = ArxivDataPath+"/"+self.category
     self.storetxtpath = self.storedirpath+"/"+self.category+".txt"
+    self.storepdfpath = self.storedirpath+"/"+self.index+".pdf"
 
   # output function
   def output_row_content(self, Comment):
     # Dont change the order arbitrarily! Index is assumed always to be in the first column.
     # index, title, author, comment. link, pdflink
-    return "%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (self.index,self.title,self.authorlist,Comment,self.link,self.pdflink)
+    return "%s & %s & %s & %s & \href{%s}{arxiv} & \href{%s}{pdf} \\\\ \n" % (self.index,self.title,self.authorlist,Comment,self.link,self.storepdfpath)
 
   # Useful function
   def gethtml(self):
@@ -156,6 +158,14 @@ def query_yes_no(question, default="yes"):
         else:
             printf("Please respond with 'yes' or 'no' (or 'y' or 'n').", "warning")
 
+def download_file(download_url, absPath):
+  printf("Downloading the pdf ...")
+  response = urllib2.urlopen(download_url)
+  thefile = open(absPath, 'wb')
+  thefile.write(response.read())
+  thefile.close()
+  printf("The pdf is downloaded successfully !")
+
 #=======================================================================================
 # Arxivhunter Function
 #=======================================================================================
@@ -199,6 +209,7 @@ def compile_maintex():
 
 def add_content(arxiv_item, Comment):
   subprocess.check_call("mkdir -p %s" % (arxiv_item.storedirpath), stdout=subprocess.PIPE, shell=True)
+  download_file(arxiv_item.pdflink, arxiv_item.storepdfpath)
   DataTxtObject = open(arxiv_item.storetxtpath,'a+')
   DataTxtObject.write(arxiv_item.output_row_content(Comment))
   DataTxtObject.close()
@@ -215,6 +226,7 @@ def remove_content(arxiv_item):
     DataTxtObject = open(arxiv_item.storetxtpath,'w+')
     DataTxtObject.writelines(Output)
     DataTxtObject.close()
+    subprocess.check_call("rm "+arxiv_item.storepdfpath, stdout=subprocess.PIPE, shell=True)
   else:
     printf("There is no data txt with category the same as index %s." % arxiv_item.index, "warning")
     printf("Skipping the removing_content function ...", "warning")
